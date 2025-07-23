@@ -207,4 +207,4 @@ override.tf.json
 terraform.rc
 pyproject.toml
 
-./chroma_db/
+chroma_db/
