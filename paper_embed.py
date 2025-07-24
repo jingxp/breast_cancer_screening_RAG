@@ -46,5 +46,37 @@ def store_embedding() -> None:
             documents=[chunk],
         )
 
+def query_db(question: str) -> list[str]:
+    """
+    Queries the ChromaDB collection for relevant chunks based on the input question.
+    
+    Args:
+        question (str): The question to query against the database.
+        
+    Returns:
+        list[str]: A list of documents that match the query.
+    """
+    question_embedding = embed(question, store=False)
+    results = chromadb_collection.query(
+        query_embeddings=[question_embedding],
+        n_results=5,
+    )
+    assert results['documents']
+    return results['documents'][0]
+
 if __name__ == "__main__":
-    store_embedding()
+    # store_embedding()
+    question = "What is the role of MRI in breast cancer screening?"
+    chunks = query_db(question)
+    prompt = f"please answer the question based on the context\n"
+    prompt += f"Question:{question}\n"
+    prompt += f"context:\n"
+    for chunk in chunks:
+        prompt += f"{chunk}\n"
+    prompt += "-------------------------\n"
+    
+    response = google_client.models.generate_content(
+        model=LLM_MODEL,
+        contents=prompt,
+    )
+    print(f"Response: {response.candidates[0].content}")
