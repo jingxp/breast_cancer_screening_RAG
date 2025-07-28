@@ -3,6 +3,7 @@ import chromadb
 import os
 from google import genai
 from dotenv import load_dotenv
+import argparse
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -37,6 +38,9 @@ def embed(text: str, store: bool) -> list[float]:
     return response.embeddings[0].values
 
 def store_embedding() -> None:
+    """
+    Stores the embeddings of the paper chunks in the ChromaDB collection.
+    """
     for i, chunk in enumerate(paper_chunk.get_chunks(paper_chunk.read_data())):
         print(f"Processing chunk {chunk}...")
         embedding = embed(chunk, store=True)
@@ -64,19 +68,35 @@ def query_db(question: str) -> list[str]:
     assert results['documents']
     return results['documents'][0]
 
-if __name__ == "__main__":
-    # store_embedding()
-    question = "What is the role of MRI in breast cancer screening?"
-    chunks = query_db(question)
+def main() -> None:
+    print("Hello from breast-cancer-screening-rag!")
+    parser = argparse.ArgumentParser(description="Query the breast cancer screening RAG system.")
+    parser.add_argument("--question", type=str, 
+                        default="What is the latest research on breast cancer screening?",
+                        help="The question to ask the RAG system.")
+    args = parser.parse_args()
+
+    chunks = query_db(args.question)
     prompt = f"please answer the question based on the context\n"
-    prompt += f"Question:{question}\n"
+    prompt += f"Question:{args.question}\n"
     prompt += f"context:\n"
-    for chunk in chunks:
-        prompt += f"{chunk}\n"
+    if not chunks:
+        prompt += "No relevant context found.\n"
+    else:
+        for chunk in chunks:
+            prompt += f"{chunk}\n"
     prompt += "-------------------------\n"
-    
+
     response = google_client.models.generate_content(
         model=LLM_MODEL,
-        contents=prompt,
+        contents=[prompt],
     )
     print(f"Response: {response.candidates[0].content}")
+    
+if __name__ == "__main__":
+    if not chromadb_collection.count() > 0:
+        store_embedding()
+    else:
+        print("ChromaDB collection already contains embeddings. Skipping embedding storage.")
+    main()
+
