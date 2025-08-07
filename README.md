@@ -25,10 +25,10 @@ Core components:
 
 ## 📁 Repository Structure
 
-/ paper.md # the published paper
-/ paper_chunk.py # paragraph based context chunk
-/ paper_embed.py # chunk embedding, store vectors and database query function
-/ README.md # This file
+- paper.md # the published paper
+- paper_chunk.py # paragraph based context chunk
+- paper_embed.py # chunk embedding, store vectors and database query function
+- README.md # This file
 
 ## 🛠️ Getting Started
 
